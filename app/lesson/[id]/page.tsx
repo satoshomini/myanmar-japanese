@@ -46,10 +46,10 @@ export default function LessonPage() {
     const el = subtitleRefs.current[currentIndex];
     const container = scrollContainerRef.current;
     if (!el || !container) return;
-    const elTop = el.offsetTop;
-    const elHeight = el.offsetHeight;
-    const containerHeight = container.clientHeight;
-    const targetScroll = elTop - containerHeight / 3 + elHeight / 2;
+    const elRect = el.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+    const relativeTop = elRect.top - containerRect.top + container.scrollTop;
+    const targetScroll = relativeTop - container.clientHeight / 3;
     container.scrollTo({ top: targetScroll, behavior: "smooth" });
   }, [currentIndex]);
 
