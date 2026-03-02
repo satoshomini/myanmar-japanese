@@ -21,15 +21,25 @@ export default function LessonPage() {
 
   useEffect(() => {
     if (!lesson) return;
-    const tag = document.createElement("script");
-    tag.src = "https://www.youtube.com/iframe_api";
-    document.body.appendChild(tag);
-    window.onYouTubeIframeAPIReady = () => {
+    const initPlayer = () => {
       playerRef.current = new window.YT.Player("yt-player", {
         videoId: lesson.videoId,
         playerVars: { rel: 0, modestbranding: 1 },
       });
     };
+
+    if (window.YT && window.YT.Player) {
+      // APIが既にロード済み
+      initPlayer();
+    } else {
+      // コールバックを設定してからスクリプトを追加
+      window.onYouTubeIframeAPIReady = initPlayer;
+      if (!document.querySelector('script[src*="youtube.com/iframe_api"]')) {
+        const tag = document.createElement("script");
+        tag.src = "https://www.youtube.com/iframe_api";
+        document.body.appendChild(tag);
+      }
+    }
     const timer = setInterval(() => {
       if (playerRef.current?.getCurrentTime) {
         const t = playerRef.current.getCurrentTime();
