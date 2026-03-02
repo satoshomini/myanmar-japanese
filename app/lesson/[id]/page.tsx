@@ -17,6 +17,7 @@ export default function LessonPage() {
   const [currentIndex, setCurrentIndex] = useState<number>(-1);
   const [popup, setPopup] = useState<{ word: string; meaning: string } | null>(null);
   const subtitleRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!lesson) return;
@@ -39,10 +40,17 @@ export default function LessonPage() {
     return () => clearInterval(timer);
   }, [lesson]);
 
+  // スクロールコンテナを使って確実に追従
   useEffect(() => {
-    if (currentIndex >= 0 && subtitleRefs.current[currentIndex]) {
-      subtitleRefs.current[currentIndex]?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
+    if (currentIndex < 0) return;
+    const el = subtitleRefs.current[currentIndex];
+    const container = scrollContainerRef.current;
+    if (!el || !container) return;
+    const elTop = el.offsetTop;
+    const elHeight = el.offsetHeight;
+    const containerHeight = container.clientHeight;
+    const targetScroll = elTop - containerHeight / 3 + elHeight / 2;
+    container.scrollTo({ top: targetScroll, behavior: "smooth" });
   }, [currentIndex]);
 
   if (!lesson) return (
@@ -62,17 +70,15 @@ export default function LessonPage() {
         <span className="bg-yellow-500 text-black text-xs font-bold px-2 py-0.5 lg:px-3 lg:py-1 rounded-full flex-shrink-0">{lesson.level}</span>
       </div>
 
-      {/* Body: column on mobile, row on desktop */}
+      {/* Body */}
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
 
-        {/* Video + large subtitle (desktop: left, mobile: top) */}
+        {/* Left / Top: Video + large subtitle (desktop) */}
         <div className="flex-shrink-0 lg:flex-1 flex flex-col lg:border-r border-gray-800 p-3 lg:p-6 gap-3 lg:gap-4">
-          {/* YouTube Player — single instance */}
           <div className="rounded-xl lg:rounded-2xl overflow-hidden bg-black aspect-video w-full">
             <div id="yt-player" className="w-full h-full" />
           </div>
-
-          {/* Large subtitle display (desktop only) */}
+          {/* Large current subtitle — desktop only */}
           <div className="hidden lg:flex bg-gray-800 rounded-2xl p-5 text-center flex-1 flex-col justify-center min-h-[100px]">
             {currentIndex >= 0 ? (
               <>
@@ -95,12 +101,13 @@ export default function LessonPage() {
           </div>
         </div>
 
-        {/* Subtitle scroll list (desktop: right, mobile: bottom) */}
-        <div className="flex-1 lg:w-2/5 lg:flex-none overflow-hidden flex flex-col">
+        {/* Right / Bottom: Subtitle scroll list */}
+        <div className="flex-1 lg:w-96 lg:flex-none overflow-hidden flex flex-col">
           <div className="flex-shrink-0 px-4 py-2 border-b border-gray-800 text-xs text-gray-500 tracking-wider hidden lg:block">
             字幕リスト — クリックで単語の意味
           </div>
-          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
+          {/* ← スクロールコンテナに ref を付ける */}
+          <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
             {lesson.subtitles.map((cue, i) => {
               const isActive = i === currentIndex;
               const isPast = i < currentIndex;
