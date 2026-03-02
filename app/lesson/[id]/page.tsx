@@ -104,7 +104,7 @@ export default function LessonPage() {
         {/* Right / Bottom: Subtitle scroll list */}
         <div className="flex-1 lg:w-96 lg:flex-none overflow-hidden flex flex-col">
           <div className="flex-shrink-0 px-4 py-2 border-b border-gray-800 text-xs text-gray-500 tracking-wider hidden lg:block">
-            字幕リスト — クリックで単語の意味
+            字幕をタップ → その位置に再生スキップ
           </div>
           {/* ← スクロールコンテナに ref を付ける */}
           <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
@@ -113,9 +113,10 @@ export default function LessonPage() {
               const isPast = i < currentIndex;
               return (
                 <div key={i} ref={(el) => { subtitleRefs.current[i] = el; }}
-                  className={`rounded-2xl px-4 py-3 transition-all duration-300 ${
+                  onClick={() => playerRef.current?.seekTo?.(cue.start, true)}
+                  className={`rounded-2xl px-4 py-3 transition-all duration-300 cursor-pointer active:scale-95 ${
                     isActive ? "bg-yellow-500/15 border border-yellow-400/60"
-                    : isPast ? "opacity-25" : "opacity-60"
+                    : isPast ? "opacity-25 hover:opacity-60" : "opacity-60 hover:opacity-80"
                   }`}>
                   <p className={`leading-relaxed mb-1 ${isActive ? "text-white font-bold text-base" : "text-gray-300 text-sm"}`}>
                     {cue.japanese.split("").map((char, ci) => {
