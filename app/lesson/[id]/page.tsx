@@ -11,10 +11,11 @@ declare global {
 
 export default function LessonPage() {
   const { id } = useParams();
-  const lesson = lessons.find((l) => l.id === id);
+  const lesson = lessons.find((l) => l.id === String(id));
   const playerRef = useRef<any>(null);
-  const [currentCue, setCurrentCue] = useState<SubtitleCue | null>(null);
+  const [currentIndex, setCurrentIndex] = useState<number>(-1);
   const [popup, setPopup] = useState<{ word: string; meaning: string } | null>(null);
+  const subtitleRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   useEffect(() => {
     if (!lesson) return;
@@ -32,36 +33,65 @@ export default function LessonPage() {
     const timer = setInterval(() => {
       if (playerRef.current?.getCurrentTime) {
         const t = playerRef.current.getCurrentTime();
-        const cue = lesson.subtitles.find((c) => t >= c.start && t < c.end) || null;
-        setCurrentCue(cue);
+        const idx = lesson.subtitles.findIndex((c) => t >= c.start && t < c.end);
+        setCurrentIndex(idx);
       }
-    }, 500);
+    }, 300);
 
     return () => clearInterval(timer);
   }, [lesson]);
 
+  // Auto-scroll to current subtitle
+  useEffect(() => {
+    if (currentIndex >= 0 && subtitleRefs.current[currentIndex]) {
+      subtitleRefs.current[currentIndex]?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  }, [currentIndex]);
+
   if (!lesson) return <div className="text-white p-8">レッスンが見つかりません</div>;
 
-  return (
-    <main className="min-h-screen bg-gray-950 text-white p-4">
-      <div className="max-w-2xl mx-auto">
-        <h1 className="text-2xl font-bold mb-1">{lesson.title}</h1>
-        <p className="text-gray-400 text-sm mb-4">{lesson.titleMm}</p>
+  const handleWordClick = (char: string) => {
+    const meaning = lookupWord(char);
+    if (meaning) setPopup({ word: char, meaning });
+  };
 
-        <div className="rounded-xl overflow-hidden aspect-video mb-4 bg-black">
+  return (
+    <main className="h-screen flex flex-col bg-gray-950 text-white overflow-hidden">
+      {/* Fixed video player */}
+      <div className="flex-shrink-0 bg-gray-950 px-4 pt-4 pb-3 max-w-2xl w-full mx-auto">
+        <h1 className="text-lg font-bold mb-2 truncate">{lesson.title}</h1>
+        <div className="rounded-xl overflow-hidden aspect-video bg-black">
           <div id="yt-player" className="w-full h-full" />
         </div>
+      </div>
 
-        <div className="bg-gray-800 rounded-xl p-5 min-h-24 text-center">
-          {currentCue ? (
-            <>
-              <p className="text-xl font-semibold mb-2 leading-relaxed">
-                {currentCue.japanese.split("").map((char, i) => {
+      {/* Scrollable subtitle list */}
+      <div className="flex-1 overflow-y-auto max-w-2xl w-full mx-auto px-4 py-3 space-y-2">
+        {lesson.subtitles.map((cue, i) => {
+          const isActive = i === currentIndex;
+          const isPast = i < currentIndex;
+          return (
+            <div
+              key={i}
+              ref={(el) => { subtitleRefs.current[i] = el; }}
+              className={`rounded-xl px-5 py-4 transition-all duration-300 ${
+                isActive
+                  ? "bg-yellow-500/20 border border-yellow-400 scale-100"
+                  : isPast
+                  ? "opacity-30"
+                  : "opacity-50"
+              }`}
+            >
+              <p className={`text-base leading-relaxed mb-1 ${isActive ? "text-white font-bold text-lg" : "text-gray-300"}`}>
+                {cue.japanese.split("").map((char, ci) => {
                   const meaning = lookupWord(char);
                   return (
                     <span
-                      key={i}
-                      onClick={() => meaning && setPopup({ word: char, meaning })}
+                      key={ci}
+                      onClick={() => meaning && handleWordClick(char)}
                       className={meaning ? "cursor-pointer underline decoration-yellow-400 hover:text-yellow-300" : ""}
                     >
                       {char}
@@ -69,26 +99,27 @@ export default function LessonPage() {
                   );
                 })}
               </p>
-              <p className="text-yellow-300 text-lg">{currentCue.myanmar}</p>
-            </>
-          ) : (
-            <p className="text-gray-500">▶ 動画を再生してください</p>
-          )}
-        </div>
-
-        {popup && (
-          <div
-            className="fixed inset-0 bg-black/60 flex items-center justify-center z-50"
-            onClick={() => setPopup(null)}
-          >
-            <div className="bg-gray-800 rounded-2xl p-6 text-center shadow-xl max-w-xs w-full mx-4">
-              <p className="text-3xl font-bold mb-2">{popup.word}</p>
-              <p className="text-yellow-300 text-xl">{popup.meaning}</p>
-              <p className="text-gray-500 text-sm mt-3">タップして閉じる</p>
+              <p className={`text-sm ${isActive ? "text-yellow-300 font-medium" : "text-gray-500"}`}>
+                {cue.myanmar}
+              </p>
             </div>
-          </div>
-        )}
+          );
+        })}
       </div>
+
+      {/* Dictionary Popup */}
+      {popup && (
+        <div
+          className="fixed inset-0 bg-black/60 flex items-center justify-center z-50"
+          onClick={() => setPopup(null)}
+        >
+          <div className="bg-gray-800 rounded-2xl p-6 text-center shadow-xl max-w-xs w-full mx-4">
+            <p className="text-3xl font-bold mb-2">{popup.word}</p>
+            <p className="text-yellow-300 text-xl">{popup.meaning}</p>
+            <p className="text-gray-500 text-sm mt-3">タップして閉じる</p>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
