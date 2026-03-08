@@ -103,6 +103,7 @@ export default function LessonPage() {
                     );
                   })}
                 </p>
+                <p className="text-gray-400 text-sm font-mono mt-1 mb-2">{lesson.subtitles[currentIndex].romaji}</p>
                 <p className="text-yellow-300 text-lg">{lesson.subtitles[currentIndex].myanmar}</p>
               </>
             ) : (
@@ -139,7 +140,10 @@ export default function LessonPage() {
                       );
                     })}
                   </p>
-                  <p className={isActive ? "text-yellow-300 text-sm font-medium" : "text-gray-500 text-xs"}>
+                  <p className={`text-xs font-mono ${isActive ? "text-gray-400" : "text-gray-600"}`}>
+                    {cue.romaji}
+                  </p>
+                  <p className={isActive ? "text-yellow-300 text-sm font-medium mt-0.5" : "text-gray-500 text-xs mt-0.5"}>
                     {cue.myanmar}
                   </p>
                 </div>
