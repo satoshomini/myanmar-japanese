@@ -2,36 +2,15 @@ import urllib.request, urllib.parse, json, re, time, sys, html as html_lib
 import xml.etree.ElementTree as ET
 
 def fetch_subtitles(vid):
-    # TV Embedded client (地域制限回避)
     headers = {
-        'User-Agent': 'Mozilla/5.0 (ChromiumStylePlatform) Cobalt/Version',
-        'Content-Type': 'application/json',
-        'Origin': 'https://www.youtube.com',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        'Accept-Language': 'ja,en;q=0.9',
     }
-    body = json.dumps({
-        "context": {"client": {
-            "clientName": "TVHTML5_SIMPLY_EMBEDDED_PLAYER",
-            "clientVersion": "2.0",
-            "thirdParty": {"embedUrl": "https://www.youtube.com"}
-        }},
-        "videoId": vid
-    }).encode()
-    req = urllib.request.Request(
-        "https://www.youtube.com/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8",
-        data=body, headers=headers
-    )
-    try:
-        data = json.loads(urllib.request.urlopen(req, timeout=15).read())
-    except Exception as e:
-        print(f"    InnerTube error: {e}", flush=True)
-        return None
-    
-    status = data.get('playabilityStatus',{}).get('status','?')
-    print(f"    status: {status}", flush=True)
-    
-    tracks = data.get('captions',{}).get('playerCaptionsTracklistRenderer',{}).get('captionTracks',[])
-    if not tracks: return None
-    
+    req = urllib.request.Request(f"https://www.youtube.com/watch?v={vid}", headers=headers)
+    page = urllib.request.urlopen(req, timeout=15).read().decode('utf-8')
+    m = re.search(r'"captionTracks":(\[.*?\])', page)
+    if not m: return None
+    tracks = json.loads(m.group(1))
     def pri(t):
         lc = t.get('languageCode',''); g = t.get('kind','') == 'asr'
         if lc.startswith('ja') and not g: return 0
@@ -40,9 +19,7 @@ def fetch_subtitles(vid):
         return 3
     tracks.sort(key=pri)
     track = tracks[0]
-    print(f"    caption lang: {track.get('languageCode')} ({track.get('kind','')})", flush=True)
-    
-    xml_req = urllib.request.Request(track['baseUrl'], headers={'User-Agent': 'Mozilla/5.0'})
+    xml_req = urllib.request.Request(track['baseUrl'], headers=headers)
     xml_data = urllib.request.urlopen(xml_req, timeout=15).read().decode('utf-8')
     root = ET.fromstring(xml_data)
     cues = []
@@ -57,14 +34,14 @@ def fetch_lrc(artist, title):
     req = urllib.request.Request(f"https://lrclib.net/api/search?q={q}", headers={'User-Agent': 'MyanmarJapanese/1.0'})
     hits = json.loads(urllib.request.urlopen(req, timeout=8).read())
     ja = [h for h in hits if h.get('syncedLyrics') and
-          any('\u3040'<=c<='\u30ff' or '\u4e00'<=c<='\u9fff' for c in (h.get('syncedLyrics') or '')[:300])]
+          any('\u3040'<=c<='\u30ff' for c in (h.get('syncedLyrics') or '')[:300])]
     if not ja: return None
     lines = []
     for line in ja[0]['syncedLyrics'].strip().split('\n'):
         mm = re.match(r'\[(\d+):(\d+\.\d+)\]\s*(.*)', line)
         if mm:
             t = int(mm.group(1))*60+float(mm.group(2)); text = mm.group(3).strip()
-            if text: lines.append((t, text))
+            if text and any('\u3040'<=c<='\u30ff' for c in text): lines.append((t, text))
     return lines
 
 def align(auto_cues, lrc_lines):
@@ -81,7 +58,6 @@ candidates = [
     ("にんじゃりばんばん / きゃりーぱみゅぱみゅ","きゃりーぱみゅぱみゅ","にんじゃりばんばん","teMdjJ3w9iM","初級"),
     ("ようかい体操第一 / Dream5","Dream5","ようかい体操第一","VyKLQXOj0ts","初級"),
     ("シュガーソングとビターステップ / UNISON SQUARE GARDEN","UNISON SQUARE GARDEN","シュガーソングとビターステップ","ERLEeGVWYxg","初級"),
-    ("マリーゴールド / あいみょん","あいみょん","マリーゴールド","0xSiBpUdW4E","中級"),
     ("白日 / King Gnu","King Gnu","白日","ony539T074w","中級"),
     ("前前前世 / RADWIMPS","RADWIMPS","前前前世","PDSkFeMVNFs","中級"),
     ("群青 / YOASOBI","YOASOBI","群青","Y4nEEZwckuU","中級"),
@@ -136,7 +112,7 @@ for song_title, artist, title, vid, level in candidates:
     try:
         auto_cues = fetch_subtitles(vid)
         if not auto_cues:
-            print(f"  → 字幕なし"); skipped.append(song_title); time.sleep(3); continue
+            print(f"  → 字幕なし"); skipped.append(song_title); time.sleep(8); continue
         lrc_lines = fetch_lrc(artist, title)
         if not lrc_lines:
             print(f"  → LRCなし"); skipped.append(song_title); time.sleep(2); continue
@@ -145,7 +121,7 @@ for song_title, artist, title, vid, level in candidates:
             skipped.append(song_title); continue
         results.append({'title':song_title,'vid':vid,'level':level,'cues':cues})
         print(f"  ✅ {len(cues)} lines")
-        time.sleep(5)
+        time.sleep(10)
     except Exception as e:
         err = str(e)[:80]
         print(f"  ❌ {err}")
@@ -153,7 +129,7 @@ for song_title, artist, title, vid, level in candidates:
         if '429' in err:
             print("  → 429! 120秒待機..."); time.sleep(120)
         else:
-            time.sleep(5)
+            time.sleep(10)
 
 print(f"\n✅ {len(results)}曲 / ❌ {len(skipped)}曲スキップ")
 with open('/tmp/aligned_songs.json','w') as f:
