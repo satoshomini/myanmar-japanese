@@ -4,7 +4,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { lessons } from "@/lib/subtitles";
 import { lookupWord } from "@/lib/dictionary";
-import { saveWord, isWordSaved } from "@/lib/storage";
+import { saveWord, isWordSaved, toggleFavorite, isFavorite } from "@/lib/storage";
 import Link from "next/link";
 
 declare global {
@@ -41,6 +41,8 @@ export default function LessonPage() {
   const [currentIndex, setCurrentIndex] = useState<number>(-1);
   const [popup, setPopup] = useState<{ word: string; meaning: string } | null>(null);
   const [savedWords, setSavedWords] = useState<Set<string>>(new Set());
+  const [fav, setFav] = useState(false);
+  useEffect(() => { if (lesson) setFav(isFavorite(lesson.id)); }, [lesson]);
   const subtitleRefs = useRef<(HTMLDivElement | null)[]>([]);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
@@ -100,6 +102,12 @@ export default function LessonPage() {
         </Link>
         <h1 className="flex-1 text-sm lg:text-lg font-bold truncate">{lesson.title}</h1>
         <span className="bg-yellow-500 text-black text-xs font-bold px-2 py-0.5 lg:px-3 lg:py-1 rounded-full flex-shrink-0">{lesson.level}</span>
+        <button
+          onClick={() => { const next = !fav; toggleFavorite(lesson.id); setFav(next); }}
+          className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-full bg-gray-800 border border-gray-700 text-lg active:scale-90 transition-transform"
+        >
+          {fav ? "❤️" : "🤍"}
+        </button>
       </div>
 
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
