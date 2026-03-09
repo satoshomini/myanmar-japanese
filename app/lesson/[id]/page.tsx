@@ -20,7 +20,7 @@ function renderWithDict(text: string, onWord: (word: string, meaning: string) =>
       spans.push(
         <span key={i}
           onClick={() => onWord(word, meaning)}
-          className="cursor-pointer underline decoration-yellow-400/70 underline-offset-2 text-yellow-100 hover:text-yellow-300 transition">
+          className="cursor-pointer text-yellow-100 hover:text-yellow-300 transition border-b-2 border-yellow-400 mr-[3px] pb-px">
           {word}
         </span>
       );
