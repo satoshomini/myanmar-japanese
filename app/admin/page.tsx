@@ -5,7 +5,7 @@ import { lessons } from "@/lib/subtitles";
 export default function AdminPage() {
   const [selectedId, setSelectedId] = useState(lessons[0]?.id || "");
   const lesson = lessons.find(l => l.id === selectedId);
-  const [cues, setCues] = useState<typeof lesson.subtitles>([]);
+  const [cues, setCues] = useState<Array<{start:number;end:number;japanese:string;romaji:string;myanmar:string}>>([]);
   const [loaded, setLoaded] = useState(false);
   const [output, setOutput] = useState("");
 
