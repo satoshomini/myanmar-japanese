@@ -67,7 +67,7 @@ export default function LessonPage() {
     const timer = setInterval(() => {
       if (playerRef.current?.getCurrentTime) {
         const t = playerRef.current.getCurrentTime();
-        const idx = lesson.subtitles.findIndex((c) => t >= c.start && t < c.end);
+        const idx = lesson.subtitles.findIndex((c, i) => t >= c.start && t < (lesson.subtitles[i + 1]?.start ?? c.end));
         setCurrentIndex(idx);
       }
     }, 300);
