@@ -10,6 +10,8 @@ export default function AdminPage() {
   const [cues, setCues] = useState<Cue[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [output, setOutput] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saveMsg, setSaveMsg] = useState("");
   const [currentTime, setCurrentTime] = useState(0);
   const [tapIndex, setTapIndex] = useState(0);
   const [tapMode, setTapMode] = useState(false);
@@ -71,6 +73,20 @@ export default function AdminPage() {
     setOutput(lines);
   }
 
+  async function autoApply() {
+    setSaving(true); setSaveMsg("");
+    try {
+      const res = await fetch("/api/admin-update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lessonId: selectedId, cues }),
+      });
+      const data = await res.json();
+      setSaveMsg(data.ok ? "✅ 反映完了！" : "❌ " + data.error);
+    } catch (e: any) { setSaveMsg("❌ " + e.message); }
+    setSaving(false);
+  }
+
   function handleTap() {
     if (tapIndex >= cues.length) return;
     const t = Math.round((playerRef.current?.getCurrentTime?.() || 0) * 10) / 10;
@@ -89,6 +105,8 @@ export default function AdminPage() {
         </select>
         <button onClick={load} className="bg-blue-600 hover:bg-blue-500 px-3 py-1 rounded text-xs">読み込む</button>
         {loaded && <button onClick={generate} className="bg-green-600 hover:bg-green-500 px-3 py-1 rounded text-xs">コード生成</button>}
+        {loaded && <button onClick={autoApply} disabled={saving} className="bg-purple-600 hover:bg-purple-500 disabled:opacity-50 px-3 py-1 rounded text-xs font-bold">{saving ? "反映中..." : "🚀 自動反映"}</button>}
+        {saveMsg && <span className="text-xs font-bold">{saveMsg}</span>}
         {loaded && (
           <button onClick={() => setTapMode(m => !m)}
             className={`px-3 py-1 rounded text-xs font-bold ${tapMode ? "bg-orange-600" : "bg-gray-700"}`}>
