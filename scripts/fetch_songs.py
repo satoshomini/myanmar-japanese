@@ -2,21 +2,36 @@ import urllib.request, urllib.parse, json, re, time, sys, html as html_lib
 import xml.etree.ElementTree as ET
 
 def fetch_subtitles(vid):
-    # Approach 1: InnerTube API
+    # TV Embedded client (地域制限回避)
     headers = {
-        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/122.0.0.0 Safari/537.36',
+        'User-Agent': 'Mozilla/5.0 (ChromiumStylePlatform) Cobalt/Version',
         'Content-Type': 'application/json',
-        'X-YouTube-Client-Name': '1',
-        'X-YouTube-Client-Version': '2.20240304',
+        'Origin': 'https://www.youtube.com',
     }
     body = json.dumps({
-        "context": {"client": {"clientName": "WEB", "clientVersion": "2.20240304", "hl": "ja"}},
+        "context": {"client": {
+            "clientName": "TVHTML5_SIMPLY_EMBEDDED_PLAYER",
+            "clientVersion": "2.0",
+            "thirdParty": {"embedUrl": "https://www.youtube.com"}
+        }},
         "videoId": vid
     }).encode()
-    req = urllib.request.Request("https://www.youtube.com/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8", data=body, headers=headers)
-    data = json.loads(urllib.request.urlopen(req, timeout=15).read())
+    req = urllib.request.Request(
+        "https://www.youtube.com/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8",
+        data=body, headers=headers
+    )
+    try:
+        data = json.loads(urllib.request.urlopen(req, timeout=15).read())
+    except Exception as e:
+        print(f"    InnerTube error: {e}", flush=True)
+        return None
+    
+    status = data.get('playabilityStatus',{}).get('status','?')
+    print(f"    status: {status}", flush=True)
+    
     tracks = data.get('captions',{}).get('playerCaptionsTracklistRenderer',{}).get('captionTracks',[])
     if not tracks: return None
+    
     def pri(t):
         lc = t.get('languageCode',''); g = t.get('kind','') == 'asr'
         if lc.startswith('ja') and not g: return 0
@@ -25,7 +40,9 @@ def fetch_subtitles(vid):
         return 3
     tracks.sort(key=pri)
     track = tracks[0]
-    xml_req = urllib.request.Request(track['baseUrl'], headers={'User-Agent': headers['User-Agent']})
+    print(f"    caption lang: {track.get('languageCode')} ({track.get('kind','')})", flush=True)
+    
+    xml_req = urllib.request.Request(track['baseUrl'], headers={'User-Agent': 'Mozilla/5.0'})
     xml_data = urllib.request.urlopen(xml_req, timeout=15).read().decode('utf-8')
     root = ET.fromstring(xml_data)
     cues = []
