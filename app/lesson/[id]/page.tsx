@@ -77,6 +77,8 @@ export default function LessonPage() {
 
   useEffect(() => {
     if (currentIndex < 0) return;
+    // クリック直後のmanual override中はauto-scrollしない
+    if (Date.now() < manualOverrideRef.current) return;
     const el = subtitleRefs.current[currentIndex];
     const container = scrollContainerRef.current;
     if (!el || !container) return;
