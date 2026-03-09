@@ -95,7 +95,7 @@ function Card({ lesson, isFav, onToggle }: { lesson: typeof lessons[0]; isFav: b
           </div>
           <button
             onClick={(e) => onToggle(lesson.id, e)}
-            className="absolute bottom-1.5 right-1.5 w-7 h-7 flex items-center justify-center rounded-full bg-black/60 backdrop-blur-sm active:scale-125 transition-transform text-base"
+            className="absolute bottom-1.5 right-1.5 text-xl leading-none drop-shadow-lg active:scale-125 transition-transform"
           >
             {isFav ? "❤️" : "🤍"}
           </button>

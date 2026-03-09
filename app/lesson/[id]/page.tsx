@@ -104,7 +104,7 @@ export default function LessonPage() {
         <span className="bg-yellow-500 text-black text-xs font-bold px-2 py-0.5 lg:px-3 lg:py-1 rounded-full flex-shrink-0">{lesson.level}</span>
         <button
           onClick={() => { const next = !fav; toggleFavorite(lesson.id); setFav(next); }}
-          className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-full bg-gray-800 border border-gray-700 text-lg active:scale-90 transition-transform"
+          className="flex-shrink-0 text-2xl leading-none active:scale-90 transition-transform"
         >
           {fav ? "❤️" : "🤍"}
         </button>
