@@ -21,7 +21,7 @@ export const lessons: Lesson[] = [
     title: "あとひとつ / FUNKY MONKEY BABYS",
     titleMm: "Ato Hitotsu / FUNKY MONKEY BABYS",
     videoId: "bGBy80LdkPI",
-    level: "N3",
+    level: "中級",
     subtitles: [
       { start: 13, end: 19, japanese: "あと一粒の涙で ひと言の勇気で", romaji: "ato ichi tsubu no namida de hitokoto no yūki de", myanmar: "မျက်ရည်တစ်စက်ထပ်နဲ့ စကားတစ်ခွန်းရဲ့ ရဲစွမ်းသတ္တိနဲ့" },
       { start: 19, end: 25, japanese: "願いがかなう その時が来るって", romaji: "negai ga kanau sono toki ga kuru tte", myanmar: "ဆုတောင်းချက် ပြည့်မြောက်မည့် အချိန် ရောက်လာမယ်လို့" },
@@ -76,7 +76,7 @@ export const lessons: Lesson[] = [
     title: "secret base〜君がくれたもの〜 / ZONE",
     titleMm: "secret base / ZONE",
     videoId: "ACo60qnd_Lc",
-    level: "N3",
+    level: "中級",
     subtitles: [
       { start: 14, end: 18, japanese: "君と夏の終わり 将来の夢", romaji: "kimi to natsu no owari shōrai no yume", myanmar: "မင်းနဲ့ နွေရာသီကုန်ချိန် အနာဂတ်အိပ်မက်" },
       { start: 18, end: 22, japanese: "大きな希望 忘れない", romaji: "ōkina kibō wasure nai", myanmar: "မြော်လင့်ချက်ကြီး မမေ့နိုင်ဘူး" },
@@ -113,7 +113,7 @@ export const lessons: Lesson[] = [
     title: "夜に駆ける / YOASOBI",
     titleMm: "Yoru ni Kakeru / YOASOBI",
     videoId: "l1QxlhkmFlg",
-    level: "N3",
+    level: "中級",
     subtitles: [
       { start: 1, end: 6, japanese: "沈むように溶けてゆくように", romaji: "shizumu yō ni toke te yuku yō ni", myanmar: "နစ်မြုပ်ပြီး အရည်ပျော်သွားသလိုပဲ။" },
       { start: 8, end: 14, japanese: "二人だけの空が広がる夜に", romaji: "ni nin ta ゙keno sora ka ゙ hiro ka ゙ru yoru ni", myanmar: "ကောင်းကင်က ငါတို့နှစ်ယောက်တည်းရှိတဲ့ ညတစ်ညမှာ" },
@@ -187,7 +187,7 @@ export const lessons: Lesson[] = [
     title: "Lemon / 米津玄師",
     titleMm: "Lemon / Kenshi Yonezu",
     videoId: "MxjXe5eg6vY",
-    level: "N3",
+    level: "中級",
     subtitles: [
       { start: 2, end: 7, japanese: "夢ならばどれほどよかったでしょう", romaji: "yume nara wa ゙to゙rehoto゙yokattate゙shou", myanmar: "အိပ်မက်ဖြစ်ရင် ဘယ်လောက်ကောင်းမလဲ။" },
       { start: 8, end: 13, japanese: "未だにあなたのことを夢にみる", romaji: "mi ta ゙nianatanokotoo yume ni miru", myanmar: "ငါ မင်းအကြောင်း အိပ်မက်မက်နေတုန်းပဲ။" },
@@ -240,7 +240,7 @@ export const lessons: Lesson[] = [
     title: "Pretender / Official髭男dism",
     titleMm: "Pretender / Official HIGE DANdism",
     videoId: "TnrVt--rXHY",
-    level: "N2",
+    level: "上級",
     subtitles: [
       { start: 23, end: 39, japanese: "君とのラブストーリー それは予想通り いざ始まればひとり芝居だ ずっとそばにいたって 結局ただの観客だ", romaji: "kimi to no rabusutōrī sore wa yosō dōri iza hajimare ba hitori shibai da zutto soba ni itatte kekkyoku tada no kankyaku da", myanmar: "မင်းနဲ့ငါ့ရဲ့အချစ်ဇာတ်လမ်းက အစကတည်းက ငါမျှော်လင့်ထားသလိုပဲ၊ မင်းရဲ့ဘေးမှာတစ်ချိန်လုံးရှိနေတယ်ဆိုတောင်မှ ငါက ပရိသတ်တစ်ယောက်ပဲလေ။" },
       { start: 39, end: 58, japanese: "感情のないアイムソーリー それはいつも通り 慣れてしまえば悪くはないけど 君とのロマンスは人生柄 続きはしないことを知った", romaji: "kanjō no nai aimusōrī sore wa itsumo tōri nare te shimae ba waruku wa nai kedo kimi to no romansu wa jinsei gara tsuzuki wa shi nai koto o shitta", myanmar: "ခံစားချက်မရှိရင် တောင်းပန်ပါတယ် အဲဒါအမြဲတမ်း အတူတူပါပဲ အဲဒါကို ကျင့်သုံးပြီးတာနဲ့ မဆိုးပါဘူး ဒါပေမယ့် မင်းနဲ့ အချစ်ရေးက ကြာရှည်မခံဘူးဆိုတာ သိလာရတဲ့ ဘဝရဲ့ သဘာဝပါပဲ" },
@@ -263,7 +263,7 @@ export const lessons: Lesson[] = [
     title: "粉雪 / レミオロメン",
     titleMm: "Konayuki / Remioromen",
     videoId: "Tic_P-ujcQM",
-    level: "N3",
+    level: "中級",
     subtitles: [
       { start: 25, end: 36, japanese: "粉雪舞う季節はいつもすれ違い", romaji: "koyuki mau kisetsu wa itsumo surechigai", myanmar: "နှင်းမှုန်ထူထပ်သောရာသီတွင် ကျွန်ုပ်တို့သည် အမြဲတစေ ဖြတ်သန်းကြသည်။" },
       { start: 36, end: 47, japanese: "人混みに紛れても同じ空見てるのに", romaji: "hitogomi ni magire te mo onaji sora mi teru noni", myanmar: "လူအုပ်ကြားထဲမှာ ပျောက်သွားရင်တောင် ကောင်းကင်ကိုပဲ မော့ကြည့်နေတုန်းပဲ။" },
