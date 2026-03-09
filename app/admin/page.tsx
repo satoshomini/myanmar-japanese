@@ -11,9 +11,12 @@ export default function AdminPage() {
   const [loaded, setLoaded] = useState(false);
   const [output, setOutput] = useState("");
   const [currentTime, setCurrentTime] = useState(0);
+  const [tapIndex, setTapIndex] = useState(0);
+  const [tapMode, setTapMode] = useState(false);
   const playerRef = useRef<any>(null);
   const intervalRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
   const lesson = lessons.find(l => l.id === selectedId);
 
@@ -30,7 +33,7 @@ export default function AdminPage() {
             if (e.data === 1) {
               intervalRef.current = setInterval(() => {
                 setCurrentTime(playerRef.current?.getCurrentTime?.() || 0);
-              }, 200);
+              }, 100);
             }
           }
         }
@@ -48,10 +51,16 @@ export default function AdminPage() {
     return () => clearInterval(intervalRef.current);
   }, [selectedId]);
 
+  useEffect(() => {
+    const el = listRef.current?.children[tapIndex] as HTMLElement;
+    el?.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, [tapIndex]);
+
   function load() {
     if (!lesson) return;
     setCues(lesson.subtitles.map(c => ({ ...c })));
     setLoaded(true);
+    setTapIndex(0);
     setOutput("");
   }
 
@@ -62,33 +71,64 @@ export default function AdminPage() {
     setOutput(lines);
   }
 
-  function seekTo(t: number) { playerRef.current?.seekTo?.(t, true); }
-
-  function setStartNow(i: number) {
-    const t = Math.round(playerRef.current?.getCurrentTime?.() * 10) / 10 || 0;
-    setCues(prev => prev.map((x, j) => j === i ? { ...x, start: t } : x));
+  function handleTap() {
+    if (tapIndex >= cues.length) return;
+    const t = Math.round((playerRef.current?.getCurrentTime?.() || 0) * 10) / 10;
+    setCues(prev => prev.map((x, j) => j === tapIndex ? { ...x, start: t } : x));
+    setTapIndex(i => Math.min(i + 1, cues.length - 1));
   }
 
-  const activeCue = cues.findIndex(c => currentTime >= c.start && currentTime < c.end);
-
   return (
-    <div className="min-h-screen bg-gray-950 text-white p-4 font-mono text-sm">
-      <h1 className="text-xl font-bold mb-3">🛠 タイムスタンプ編集</h1>
-      <div className="flex gap-2 mb-3 flex-wrap items-center">
-        <select className="bg-gray-800 border border-gray-600 rounded px-2 py-1"
+    <div className="min-h-screen bg-gray-950 text-white p-3 font-mono text-sm select-none">
+      <h1 className="text-lg font-bold mb-2">🛠 タイムスタンプ編集</h1>
+
+      <div className="flex gap-2 mb-2 flex-wrap items-center">
+        <select className="bg-gray-800 border border-gray-600 rounded px-2 py-1 text-xs"
           value={selectedId} onChange={e => { setSelectedId(e.target.value); setLoaded(false); setOutput(""); }}>
           {lessons.map(l => <option key={l.id} value={l.id}>{l.id}. {l.title}</option>)}
         </select>
-        <button onClick={load} className="bg-blue-600 hover:bg-blue-500 px-3 py-1 rounded">読み込む</button>
-        {loaded && <button onClick={generate} className="bg-green-600 hover:bg-green-500 px-3 py-1 rounded">コード生成</button>}
-        <span className="text-yellow-400 font-bold">▶ {currentTime.toFixed(1)}s</span>
+        <button onClick={load} className="bg-blue-600 hover:bg-blue-500 px-3 py-1 rounded text-xs">読み込む</button>
+        {loaded && <button onClick={generate} className="bg-green-600 hover:bg-green-500 px-3 py-1 rounded text-xs">コード生成</button>}
+        {loaded && (
+          <button onClick={() => setTapMode(m => !m)}
+            className={`px-3 py-1 rounded text-xs font-bold ${tapMode ? "bg-orange-600" : "bg-gray-700"}`}>
+            {tapMode ? "✋ タップ中" : "👆 タップモード"}
+          </button>
+        )}
+        <span className="text-yellow-400 text-xs font-bold">▶ {currentTime.toFixed(1)}s</span>
       </div>
-      <div ref={containerRef} className="w-full max-w-xl mb-3 aspect-video bg-black" />
+
+      <div ref={containerRef} className="w-full max-w-xl mb-2 aspect-video bg-black" />
+
+      {loaded && tapMode && (
+        <div className="mb-3">
+          <div className="bg-gray-900 rounded-xl p-3 mb-2 text-center">
+            <p className="text-gray-500 text-xs mb-1">{tapIndex + 1} / {cues.length}</p>
+            <p className="text-white text-xl font-bold leading-snug">{cues[tapIndex]?.japanese}</p>
+            <p className="text-gray-400 text-xs mt-1">{cues[tapIndex]?.romaji}</p>
+          </div>
+          <button
+            onPointerDown={handleTap}
+            className="w-full py-10 bg-orange-600 hover:bg-orange-500 active:bg-orange-400 active:scale-95 rounded-2xl text-3xl font-bold transition-all"
+          >
+            TAP
+          </button>
+          <div className="flex gap-2 mt-2">
+            <button onClick={() => setTapIndex(i => Math.max(0, i - 1))}
+              className="flex-1 py-2 bg-gray-700 hover:bg-gray-600 rounded-xl text-sm">← 戻る</button>
+            <button onClick={() => setTapIndex(i => Math.min(cues.length - 1, i + 1))}
+              className="flex-1 py-2 bg-gray-700 hover:bg-gray-600 rounded-xl text-sm">スキップ →</button>
+          </div>
+        </div>
+      )}
+
       {loaded && (
-        <div className="space-y-0.5 mb-4 max-h-80 overflow-y-auto border border-gray-800 rounded p-1">
+        <div ref={listRef} className="space-y-0.5 mb-3 max-h-52 overflow-y-auto border border-gray-800 rounded p-1">
           {cues.map((c, i) => (
-            <div key={i} className={`flex gap-1 items-center rounded px-1 py-0.5 cursor-pointer ${i === activeCue ? "bg-yellow-900" : "hover:bg-gray-800"}`}
-              onClick={() => { const t = Math.round((playerRef.current?.getCurrentTime?.() || 0) * 10) / 10; setCues(prev => prev.map((x, j) => j === i ? { ...x, start: t } : x)); }}>
+            <div key={i}
+              className={`flex gap-1 items-center rounded px-1 py-0.5 cursor-pointer transition-colors
+                ${i === tapIndex && tapMode ? "bg-orange-900 ring-1 ring-orange-500" : "hover:bg-gray-800"}`}
+              onClick={() => { setTapIndex(i); playerRef.current?.seekTo?.(c.start, true); }}>
               <span className="text-gray-600 w-5 text-right text-xs">{i+1}</span>
               <input type="number" step="0.5" className="bg-gray-800 border border-gray-700 rounded px-1 w-16 text-center text-xs"
                 value={c.start} onClick={e => e.stopPropagation()}
@@ -97,13 +137,14 @@ export default function AdminPage() {
               <input type="number" step="0.5" className="bg-gray-800 border border-gray-700 rounded px-1 w-16 text-center text-xs"
                 value={c.end} onClick={e => e.stopPropagation()}
                 onChange={e => setCues(prev => prev.map((x,j) => j===i ? {...x, end: parseFloat(e.target.value)||0} : x))} />
-              <button className="bg-orange-700 hover:bg-orange-500 px-1 rounded text-xs shrink-0"
-                onClick={e => { e.stopPropagation(); setStartNow(i); }}>⏱</button>
-              <span className={`flex-1 truncate text-xs ${i === activeCue ? "text-yellow-300 font-bold" : "text-gray-300"}`}>{c.japanese}</span>
+              <span className={`flex-1 truncate text-xs ${i === tapIndex && tapMode ? "text-orange-300 font-bold" : "text-gray-300"}`}>
+                {c.japanese}
+              </span>
             </div>
           ))}
         </div>
       )}
+
       {output && (
         <div>
           <p className="text-gray-500 mb-1 text-xs">↓ lib/subtitles.ts の subtitles: [] 内に貼り付け</p>
