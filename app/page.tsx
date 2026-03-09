@@ -101,7 +101,7 @@ function Card({ lesson, isFav, onToggle }: { lesson: typeof lessons[0]; isFav: b
           </button>
         </div>
         <div className="p-2">
-          <p className="text-xs font-bold leading-tight line-clamp-2">{parts[0]}</p>
+          <p className="text-xs font-bold leading-tight line-clamp-1">{parts[0]}</p>
           <p className="text-[10px] text-gray-500 mt-0.5 line-clamp-1">{parts[1]}</p>
         </div>
       </div>
