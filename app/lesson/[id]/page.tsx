@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { lessons } from "@/lib/subtitles";
 import { lookupWord } from "@/lib/dictionary";
+import { saveWord, isWordSaved } from "@/lib/storage";
 import Link from "next/link";
 
 declare global {
@@ -39,6 +40,7 @@ export default function LessonPage() {
   const playerRef = useRef<any>(null);
   const [currentIndex, setCurrentIndex] = useState<number>(-1);
   const [popup, setPopup] = useState<{ word: string; meaning: string } | null>(null);
+  const [savedWords, setSavedWords] = useState<Set<string>>(new Set());
   const subtitleRefs = useRef<(HTMLDivElement | null)[]>([]);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
@@ -160,7 +162,15 @@ export default function LessonPage() {
             <div className="w-10 h-1 bg-gray-600 rounded-full mx-auto mb-4 lg:hidden" />
             <p className="text-4xl font-bold mb-3">{popup.word}</p>
             <p className="text-yellow-300 text-xl mb-2">{popup.meaning}</p>
-            <button onClick={() => setPopup(null)} className="mt-4 text-gray-500 text-sm">閉じる</button>
+            <div className="flex gap-3 mt-5 justify-center">
+              <button
+                onClick={() => { saveWord(popup.word, popup.meaning); setSavedWords(new Set([...savedWords, popup.word])); }}
+                className={`px-5 py-2 rounded-full text-sm font-bold transition ${savedWords.has(popup.word) || isWordSaved(popup.word) ? "bg-yellow-500 text-black" : "bg-gray-700 text-white hover:bg-yellow-500 hover:text-black"}`}
+              >
+                {savedWords.has(popup.word) || isWordSaved(popup.word) ? "✓ 保存済み" : "📖 単語帳に保存"}
+              </button>
+              <button onClick={() => setPopup(null)} className="px-5 py-2 rounded-full text-sm text-gray-400 bg-gray-700">閉じる</button>
+            </div>
           </div>
         </div>
       )}
