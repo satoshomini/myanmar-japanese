@@ -10,6 +10,29 @@ declare global {
   interface Window { YT: any; onYouTubeIframeAPIReady: () => void; }
 }
 
+function renderWithDict(text: string, onWord: (word: string, meaning: string) => void) {
+  const spans = [];
+  let i = 0;
+  while (i < text.length) {
+    const match = lookupWord(text, i);
+    if (match) {
+      const { word, meaning, length } = match;
+      spans.push(
+        <span key={i}
+          onClick={() => onWord(word, meaning)}
+          className="cursor-pointer underline decoration-yellow-400/70 underline-offset-2 text-yellow-100 hover:text-yellow-300 transition">
+          {word}
+        </span>
+      );
+      i += length;
+    } else {
+      spans.push(<span key={i}>{text[i]}</span>);
+      i++;
+    }
+  }
+  return spans;
+}
+
 export default function LessonPage() {
   const { id } = useParams();
   const lesson = lessons.find((l) => l.id === String(id));
@@ -27,12 +50,9 @@ export default function LessonPage() {
         playerVars: { rel: 0, modestbranding: 1 },
       });
     };
-
     if (window.YT && window.YT.Player) {
-      // APIが既にロード済み
       initPlayer();
     } else {
-      // コールバックを設定してからスクリプトを追加
       window.onYouTubeIframeAPIReady = initPlayer;
       if (!document.querySelector('script[src*="youtube.com/iframe_api"]')) {
         const tag = document.createElement("script");
@@ -50,7 +70,6 @@ export default function LessonPage() {
     return () => clearInterval(timer);
   }, [lesson]);
 
-  // スクロールコンテナを使って確実に追従
   useEffect(() => {
     if (currentIndex < 0) return;
     const el = subtitleRefs.current[currentIndex];
@@ -59,8 +78,7 @@ export default function LessonPage() {
     const elRect = el.getBoundingClientRect();
     const containerRect = container.getBoundingClientRect();
     const relativeTop = elRect.top - containerRect.top + container.scrollTop;
-    const targetScroll = relativeTop - container.clientHeight / 3;
-    container.scrollTo({ top: targetScroll, behavior: "smooth" });
+    container.scrollTo({ top: relativeTop - container.clientHeight / 3, behavior: "smooth" });
   }, [currentIndex]);
 
   if (!lesson) return (
@@ -68,6 +86,8 @@ export default function LessonPage() {
       <Link href="/" className="text-yellow-400 underline">← 戻る</Link>
     </div>
   );
+
+  const onWord = (word: string, meaning: string) => setPopup({ word, meaning });
 
   return (
     <main className="h-dvh lg:h-screen flex flex-col bg-gray-950 text-white overflow-hidden">
@@ -80,30 +100,19 @@ export default function LessonPage() {
         <span className="bg-yellow-500 text-black text-xs font-bold px-2 py-0.5 lg:px-3 lg:py-1 rounded-full flex-shrink-0">{lesson.level}</span>
       </div>
 
-      {/* Body */}
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
-
-        {/* Left / Top: Video + large subtitle (desktop) */}
+        {/* Left / Top: Video + large subtitle */}
         <div className="flex-shrink-0 lg:flex-1 flex flex-col lg:border-r border-gray-800 p-3 lg:p-6 gap-3 lg:gap-4">
           <div className="rounded-xl lg:rounded-2xl overflow-hidden bg-black aspect-video w-full">
             <div id="yt-player" className="w-full h-full" />
           </div>
-          {/* Large current subtitle — desktop only */}
           <div className="hidden lg:flex bg-gray-800 rounded-2xl p-5 text-center flex-1 flex-col justify-center min-h-[100px]">
             {currentIndex >= 0 ? (
               <>
                 <p className="text-2xl font-bold mb-2 leading-relaxed">
-                  {lesson.subtitles[currentIndex].japanese.split("").map((char, ci) => {
-                    const meaning = lookupWord(char);
-                    return (
-                      <span key={ci} onClick={() => meaning && setPopup({ word: char, meaning })}
-                        className={meaning ? "cursor-pointer underline decoration-yellow-400/60 underline-offset-4 hover:text-yellow-300 transition" : ""}>
-                        {char}
-                      </span>
-                    );
-                  })}
+                  {renderWithDict(lesson.subtitles[currentIndex].japanese, onWord)}
                 </p>
-                <p className="text-gray-400 text-sm font-mono mt-1 mb-2">{lesson.subtitles[currentIndex].romaji}</p>
+                <p className="text-gray-400 text-sm font-mono mb-2">{lesson.subtitles[currentIndex].romaji}</p>
                 <p className="text-yellow-300 text-lg">{lesson.subtitles[currentIndex].myanmar}</p>
               </>
             ) : (
@@ -112,12 +121,11 @@ export default function LessonPage() {
           </div>
         </div>
 
-        {/* Right / Bottom: Subtitle scroll list */}
+        {/* Right / Bottom: Subtitle list */}
         <div className="flex-1 lg:w-96 lg:flex-none overflow-hidden flex flex-col">
           <div className="flex-shrink-0 px-4 py-2 border-b border-gray-800 text-xs text-gray-500 tracking-wider hidden lg:block">
-            字幕をタップ → その位置に再生スキップ
+            字幕タップ → スキップ ｜ 黄色の単語 → 意味
           </div>
-          {/* ← スクロールコンテナに ref を付ける */}
           <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
             {lesson.subtitles.map((cue, i) => {
               const isActive = i === currentIndex;
@@ -127,25 +135,17 @@ export default function LessonPage() {
                   onClick={() => playerRef.current?.seekTo?.(cue.start, true)}
                   className={`rounded-2xl px-4 py-3 transition-all duration-300 cursor-pointer active:scale-95 ${
                     isActive ? "bg-yellow-500/15 border border-yellow-400/60"
-                    : isPast ? "opacity-25 hover:opacity-60" : "opacity-60 hover:opacity-80"
+                    : isPast ? "opacity-25 hover:opacity-50" : "opacity-60 hover:opacity-80"
                   }`}>
-                  <p className={`leading-relaxed mb-1 ${isActive ? "text-white font-bold text-base" : "text-gray-300 text-sm"}`}>
-                    {cue.japanese.split("").map((char, ci) => {
-                      const meaning = lookupWord(char);
-                      return (
-                        <span key={ci} onClick={() => meaning && setPopup({ word: char, meaning })}
-                          className={meaning ? "cursor-pointer underline decoration-yellow-400/60 underline-offset-2" : ""}>
-                          {char}
-                        </span>
-                      );
-                    })}
+                  <p className={`leading-relaxed mb-0.5 ${isActive ? "text-white font-bold text-base" : "text-gray-300 text-sm"}`}>
+                    {renderWithDict(cue.japanese, onWord)}
                   </p>
-                  <p className={`text-xs font-mono ${isActive ? "text-gray-400" : "text-gray-600"}`}>
-                    {cue.romaji}
-                  </p>
-                  <p className={isActive ? "text-yellow-300 text-sm font-medium mt-0.5" : "text-gray-500 text-xs mt-0.5"}>
-                    {cue.myanmar}
-                  </p>
+                  {cue.romaji && (
+                    <p className={`text-xs font-mono ${isActive ? "text-gray-400" : "text-gray-600"}`}>{cue.romaji}</p>
+                  )}
+                  {cue.myanmar && (
+                    <p className={`text-xs mt-0.5 ${isActive ? "text-yellow-300 text-sm font-medium" : "text-gray-500"}`}>{cue.myanmar}</p>
+                  )}
                 </div>
               );
             })}
