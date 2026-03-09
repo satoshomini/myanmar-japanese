@@ -39,6 +39,7 @@ export default function LessonPage() {
   const lesson = lessons.find((l) => l.id === String(id));
   const playerRef = useRef<any>(null);
   const [currentIndex, setCurrentIndex] = useState<number>(-1);
+  const manualOverrideRef = useRef<number>(0);
   const [popup, setPopup] = useState<{ word: string; meaning: string } | null>(null);
   const [savedWords, setSavedWords] = useState<Set<string>>(new Set());
   const [fav, setFav] = useState(false);
@@ -68,7 +69,7 @@ export default function LessonPage() {
       if (playerRef.current?.getCurrentTime) {
         const t = playerRef.current.getCurrentTime();
         const idx = lesson.subtitles.findIndex((c, i) => t >= c.start && t < (lesson.subtitles[i + 1]?.start ?? c.end));
-        setCurrentIndex(idx);
+        if (Date.now() > manualOverrideRef.current) setCurrentIndex(idx);
       }
     }, 300);
     return () => clearInterval(timer);
@@ -142,7 +143,7 @@ export default function LessonPage() {
               const isPast = i < currentIndex;
               return (
                 <div key={i} ref={(el) => { subtitleRefs.current[i] = el; }}
-                  onClick={() => playerRef.current?.seekTo?.(cue.start, true)}
+                  onClick={() => { playerRef.current?.seekTo?.(cue.start, true); setCurrentIndex(i); manualOverrideRef.current = Date.now() + 1000; }}
                   className={`rounded-2xl px-4 py-3 transition-all duration-300 cursor-pointer active:scale-95 ${
                     isActive ? "bg-yellow-500/15 border border-yellow-400/60"
                     : isPast ? "opacity-25 hover:opacity-50" : "opacity-60 hover:opacity-80"
