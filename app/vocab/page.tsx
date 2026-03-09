@@ -85,13 +85,7 @@ function WordCard({ w, onRemove }: { w: SavedWord; onRemove: () => void }) {
               <p className="text-gray-500 text-xs mb-1">ミャンマー語</p>
               <p className="text-yellow-300 text-base">{w.meaning}</p>
             </div>
-            <div className="col-span-2">
-              <p className="text-gray-500 text-xs mb-1">保存日</p>
-              <p className="text-gray-400 text-xs">
-                {new Date(w.savedAt).toLocaleDateString("ja-JP", { month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}
-              </p>
             </div>
-          </div>
         </div>
       )}
     </div>
