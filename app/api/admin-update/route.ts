@@ -11,12 +11,12 @@ export async function POST(req: NextRequest) {
     const filePath = path.join(process.cwd(), "lib/subtitles.ts");
     let content = fs.readFileSync(filePath, "utf-8");
 
+    // インデックス順で全行を置き換え（テキスト検索しない）
     const newLines = cues.map((c: any) =>
       `      { start: ${c.start}, end: ${c.end}, japanese: "${String(c.japanese).replace(/"/g,"'")}", romaji: "${String(c.romaji).replace(/"/g,"'")}", myanmar: "${String(c.myanmar).replace(/"/g,"'")}" },`
     ).join("\n");
 
-    const idStr = `id: "${lessonId}"`;
-    const regex = new RegExp(`(  \\{\\n    ${idStr}[\\s\\S]*?subtitles: \\[)([\\s\\S]*?)(\\n    \\],\\n  \\},)`);
+    const regex = new RegExp(`(  \\{\\n    id: "${lessonId}"[\\s\\S]*?subtitles: \\[)([\\s\\S]*?)(\\n    \\],\\n  \\},)`);
     if (!regex.test(content)) return NextResponse.json({ error: "lesson not found" }, { status: 404 });
 
     content = content.replace(regex, `$1\n${newLines}$3`);
@@ -26,10 +26,7 @@ export async function POST(req: NextRequest) {
       exec(
         `GIT_SSH_COMMAND="ssh -i /Users/mini/.ssh/github_myanmar" git add lib/subtitles.ts && git commit -m "Admin: update lesson ${lessonId} timing" && GIT_SSH_COMMAND="ssh -i /Users/mini/.ssh/github_myanmar" git push`,
         { cwd: process.cwd() },
-        (err, stdout, stderr) => {
-          if (err) reject(new Error(stderr));
-          else resolve();
-        }
+        (err, _stdout, stderr) => err ? reject(new Error(stderr)) : resolve()
       );
     });
 
