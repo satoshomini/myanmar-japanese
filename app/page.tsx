@@ -1,30 +1,43 @@
 import Link from "next/link";
+import Image from "next/image";
 import { lessons } from "@/lib/subtitles";
 
 export default function Home() {
   return (
     <main className="min-h-screen bg-gray-950 text-white">
       {/* Header */}
-      <div className="bg-gray-900 border-b border-gray-800 px-4 py-4 safe-top">
-        <h1 className="text-2xl font-bold">🇯🇵 မြန်မာ Japanese</h1>
-        <p className="text-gray-400 text-sm mt-1">ဂျပန်ဘာသာ သင်ကြားမှု • ミャンマー人のための日本語</p>
+      <div className="px-4 pt-8 pb-6 text-center">
+        <h1 className="text-3xl font-bold mb-1">🇯🇵 မြန်မာ Japanese</h1>
+        <p className="text-gray-400 text-sm">ဂျပန်ဘာသာ သင်ကြားမှု • ミャンマー人のための日本語</p>
       </div>
 
-      {/* Lesson list */}
-      <div className="max-w-lg mx-auto px-4 py-4 space-y-3">
-        <h2 className="text-base font-semibold text-gray-400 uppercase tracking-wider mb-3">レッスン一覧</h2>
+      {/* 2-column grid */}
+      <div className="px-4 pb-8 grid grid-cols-2 gap-4 max-w-2xl mx-auto">
         {lessons.map((lesson) => (
           <Link key={lesson.id} href={`/lesson/${lesson.id}`}>
-            <div className="bg-gray-800 active:bg-gray-700 rounded-2xl p-4 transition border border-gray-700 flex items-center justify-between gap-3">
-              <div className="flex-1 min-w-0">
-                <p className="font-bold text-base truncate">{lesson.title}</p>
-                <p className="text-gray-400 text-sm mt-0.5 truncate">{lesson.titleMm}</p>
+            <div className="bg-gray-900 rounded-2xl overflow-hidden active:scale-95 transition-transform duration-150 border border-gray-800">
+              {/* Thumbnail */}
+              <div className="relative aspect-video w-full bg-gray-800">
+                <Image
+                  src={`https://img.youtube.com/vi/${lesson.videoId}/mqdefault.jpg`}
+                  alt={lesson.title}
+                  fill
+                  className="object-cover"
+                  unoptimized
+                />
+                {/* Level badge overlay */}
+                <div className="absolute top-2 right-2">
+                  <span className="bg-yellow-500 text-black text-xs font-bold px-2 py-0.5 rounded-full">
+                    {lesson.level}
+                  </span>
+                </div>
               </div>
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <span className="bg-yellow-500 text-black text-xs font-bold px-2.5 py-1 rounded-full">
-                  {lesson.level}
-                </span>
-                <span className="text-gray-500">›</span>
+
+              {/* Info */}
+              <div className="p-3">
+                <p className="font-bold text-sm leading-tight line-clamp-1">{lesson.title.split(' / ')[0]}</p>
+                <p className="text-gray-400 text-xs mt-0.5 line-clamp-1">{lesson.title.split(' / ')[1]}</p>
+                <p className="text-gray-600 text-xs mt-1.5">{lesson.subtitles.length} フレーズ</p>
               </div>
             </div>
           </Link>
