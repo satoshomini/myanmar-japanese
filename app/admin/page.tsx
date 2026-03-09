@@ -88,7 +88,7 @@ export default function AdminPage() {
         <div className="space-y-0.5 mb-4 max-h-80 overflow-y-auto border border-gray-800 rounded p-1">
           {cues.map((c, i) => (
             <div key={i} className={`flex gap-1 items-center rounded px-1 py-0.5 cursor-pointer ${i === activeCue ? "bg-yellow-900" : "hover:bg-gray-800"}`}
-              onClick={() => seekTo(c.start)}>
+              onClick={() => { const t = Math.round((playerRef.current?.getCurrentTime?.() || 0) * 10) / 10; setCues(prev => prev.map((x, j) => j === i ? { ...x, start: t } : x)); }}>
               <span className="text-gray-600 w-5 text-right text-xs">{i+1}</span>
               <input type="number" step="0.5" className="bg-gray-800 border border-gray-700 rounded px-1 w-16 text-center text-xs"
                 value={c.start} onClick={e => e.stopPropagation()}
