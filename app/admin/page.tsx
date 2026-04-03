@@ -21,6 +21,8 @@ export default function AdminPage() {
   const intervalRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const origCuesRef = useRef<Cue[]>([]);
+  const [offsetMsg, setOffsetMsg] = useState("");
 
   const [fullLesson, setFullLesson] = useState<Lesson | undefined>(undefined);
   useEffect(() => {
@@ -85,10 +87,13 @@ export default function AdminPage() {
 
   function load() {
     if (!lesson) return;
-    setCues(lesson.subtitles.map(c => ({ ...c })));
+    const initial = lesson.subtitles.map(c => ({ ...c }));
+    origCuesRef.current = initial;
+    setCues(initial);
     setLoaded(true);
     setTapIndex(0);
     setOutput("");
+    setOffsetMsg("");
   }
 
   function generate() {
@@ -183,6 +188,7 @@ export default function AdminPage() {
             <button onClick={() => setTapIndex(i => Math.min(cues.length - 1, i + 1))}
               className="flex-1 py-2 bg-gray-700 hover:bg-gray-600 rounded-xl text-sm">スキップ →</button>
           </div>
+          {offsetMsg && <p className="text-center text-green-400 text-xs mt-1 font-bold">{offsetMsg}</p>}
           <p className="text-center text-gray-500 text-xs mt-1">Space / ← キーでも操作できます</p>
         </div>
       )}
