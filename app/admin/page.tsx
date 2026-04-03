@@ -85,6 +85,17 @@ export default function AdminPage() {
     setTapIndex(i => i - 1);
   }
 
+  function shiftAll(delta: number) {
+    setCues(prev => prev.map((x, i, arr) => {
+      const ns = Math.round((x.start + delta) * 10) / 10;
+      const ne = i + 1 < arr.length
+        ? Math.round((arr[i + 1].start + delta) * 10) / 10
+        : Math.round((x.end + delta) * 10) / 10;
+      return { ...x, start: ns, end: ne };
+    }));
+    setOffsetMsg(`全体を${delta >= 0 ? "+" : ""}${delta}s ずらした`);
+  }
+
   function load() {
     if (!lesson) return;
     const initial = lesson.subtitles.map(c => ({ ...c }));
@@ -189,6 +200,15 @@ export default function AdminPage() {
               className="flex-1 py-2 bg-gray-700 hover:bg-gray-600 rounded-xl text-sm">スキップ →</button>
           </div>
           {offsetMsg && <p className="text-center text-green-400 text-xs mt-1 font-bold">{offsetMsg}</p>}
+          <div className="flex gap-1 mt-2 justify-center">
+            <span className="text-gray-500 text-xs self-center">全体:</span>
+            {[-1, -0.5, -0.1, 0.1, 0.5, 1].map(d => (
+              <button key={d} onClick={() => shiftAll(d)}
+                className="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded text-xs font-mono">
+                {d > 0 ? `+${d}` : d}s
+              </button>
+            ))}
+          </div>
           <p className="text-center text-gray-500 text-xs mt-1">Space / ← キーでも操作できます</p>
         </div>
       )}
