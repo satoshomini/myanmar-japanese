@@ -22,7 +22,6 @@ export default function AdminPage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
-  const lessonMeta = lessons.find(l => l.id === selectedId);
   const [fullLesson, setFullLesson] = useState<Lesson | undefined>(undefined);
   useEffect(() => {
     getLessonById(selectedId).then(setFullLesson);
@@ -101,9 +100,17 @@ export default function AdminPage() {
   function handleTap() {
     if (tapIndex >= cues.length) return;
     const t = Math.round((playerRef.current?.getCurrentTime?.() || 0) * 10) / 10;
-    setCues(prev => prev.map((x, j) => j === tapIndex ? { ...x, start: t } : x));
+    setCues(prev => prev.map((x, j) => {
+      if (j === tapIndex) return { ...x, start: t };           // 現在の歌詞のstartを設定
+      if (j === tapIndex - 1) return { ...x, end: t };        // 前の歌詞のendを自動調整
+      return x;
+    }));
     setTapIndex(i => Math.min(i + 1, cues.length - 1));
   }
+
+  // 表示用: tapIndex-1（今セットした歌詞）を表示。次にセットする歌詞はサブ表示
+  const displayIndex = Math.max(0, tapIndex - 1);
+  const nextIndex = tapIndex;
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-3 font-mono text-sm select-none">
@@ -131,11 +138,23 @@ export default function AdminPage() {
 
       {loaded && tapMode && (
         <div className="mb-3">
-          <div className="bg-gray-900 rounded-xl p-3 mb-2 text-center">
-            <p className="text-gray-500 text-xs mb-1">{tapIndex + 1} / {cues.length}</p>
-            <p className="text-white text-xl font-bold leading-snug">{cues[tapIndex]?.japanese}</p>
-            <p className="text-gray-400 text-xs mt-1">{cues[tapIndex]?.romaji}</p>
+          {/* 現在表示中の歌詞（tapIndex-1: 直前にセットしたもの） */}
+          <div className="bg-gray-900 rounded-xl p-3 mb-1 text-center">
+            <p className="text-gray-500 text-xs mb-1">
+              {tapIndex === 0 ? "最初の歌詞" : `✅ セット済み ${displayIndex + 1} / ${cues.length}`}
+            </p>
+            <p className="text-white text-xl font-bold leading-snug">
+              {tapIndex === 0 ? "▼ TAPで最初の歌詞のStartを設定" : cues[displayIndex]?.japanese}
+            </p>
+            {tapIndex > 0 && <p className="text-gray-400 text-xs mt-1">{cues[displayIndex]?.romaji}</p>}
           </div>
+          {/* 次にタップする歌詞（小さく表示） */}
+          {nextIndex < cues.length && (
+            <div className="bg-gray-800 rounded-lg px-3 py-1.5 mb-2 text-center opacity-70">
+              <p className="text-orange-400 text-xs font-bold">👆 次: {nextIndex + 1}/{cues.length}</p>
+              <p className="text-gray-300 text-sm">{cues[nextIndex]?.japanese}</p>
+            </div>
+          )}
           <button
             onPointerDown={handleTap}
             className="w-full py-10 bg-orange-600 hover:bg-orange-500 active:bg-orange-400 active:scale-95 rounded-2xl text-3xl font-bold transition-all"
@@ -176,7 +195,7 @@ export default function AdminPage() {
 
       {output && (
         <div>
-          <p className="text-gray-500 mb-1 text-xs">↓ lib/subtitles.ts の subtitles: [] 内に貼り付け</p>
+          <p className="text-gray-500 mb-1 text-xs">↓ コピーして貼り付け</p>
           <textarea readOnly className="w-full h-40 bg-gray-900 border border-gray-700 rounded p-2 text-xs"
             value={output} onClick={e => (e.target as HTMLTextAreaElement).select()} />
         </div>
