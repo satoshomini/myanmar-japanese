@@ -136,11 +136,25 @@ export default function AdminPage() {
     const idx = tapIndexRef.current;
     if (idx >= cues.length) return;
     const t = Math.round((playerRef.current?.getCurrentTime?.() || 0) * 10) / 10;
-    setCues(prev => prev.map((x, j) => {
-      if (j === idx) return { ...x, start: t };           // 現在の歌詞のstartを設定
-      if (j === idx - 1) return { ...x, end: t };        // 前の歌詞のendを自動調整
-      return x;
-    }));
+    // タップ行のstartを設定し、以降の行をオフセットで自動調整
+    const origStart = origCuesRef.current[idx]?.start ?? t;
+    const offset = Math.round((t - origStart) * 10) / 10;
+    setCues(prev => {
+      const arr = [...prev];
+      return arr.map((x, j) => {
+        if (j < idx - 1) return x; // それより前は変更なし
+        if (j === idx - 1) return { ...x, end: t }; // 前の歌詞のendを自動調整
+        // idx以降: origCuesRefのstartにoffsetを加算して再計算
+        const origS = origCuesRef.current[j]?.start ?? x.start;
+        const nextOrigS = origCuesRef.current[j + 1]?.start;
+        const newStart = Math.round((origS + offset) * 10) / 10;
+        const newEnd = nextOrigS != null
+          ? Math.round((nextOrigS + offset) * 10) / 10
+          : Math.round((newStart + 5) * 10) / 10;
+        return { ...x, start: newStart, end: newEnd };
+      });
+    });
+    if (offset !== 0) setOffsetMsg(`${idx + 1}行目以降を${offset >= 0 ? "+" : ""}${offset}s 調整`);
     const next = Math.min(idx + 1, cues.length - 1);
     tapIndexRef.current = next;
     setTapIndex(next);
