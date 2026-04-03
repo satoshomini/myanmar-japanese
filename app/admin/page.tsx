@@ -30,9 +30,13 @@ export default function AdminPage() {
   const lesson = fullLesson;
 
   useEffect(() => {
-    const initPlayer = () => {
-      if (!containerRef.current || !lesson) return;
-      if (playerRef.current) { playerRef.current.destroy(); }
+    if (!lesson) return;
+    const init = () => {
+      if (!containerRef.current) return;
+      if (playerRef.current) {
+        playerRef.current.loadVideoById(lesson.videoId);
+        return;
+      }
       playerRef.current = new window.YT.Player(containerRef.current, {
         videoId: lesson.videoId,
         width: "100%",
@@ -48,9 +52,9 @@ export default function AdminPage() {
         }
       });
     };
-    if (window.YT) { initPlayer(); }
+    if (window.YT?.Player) { init(); }
     else {
-      window.onYouTubeIframeAPIReady = initPlayer;
+      window.onYouTubeIframeAPIReady = init;
       if (!document.querySelector('script[src*="youtube.com/iframe_api"]')) {
         const tag = document.createElement("script");
         tag.src = "https://www.youtube.com/iframe_api";
@@ -58,7 +62,7 @@ export default function AdminPage() {
       }
     }
     return () => clearInterval(intervalRef.current);
-  }, [selectedId]);
+  }, [fullLesson]);
 
   useEffect(() => {
     const el = listRef.current?.children[tapIndex] as HTMLElement;
