@@ -22,6 +22,7 @@ export default function AdminPage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const origCuesRef = useRef<Cue[]>([]);
+  const tapIndexRef = useRef(0);
   const [offsetMsg, setOffsetMsg] = useState("");
 
   const [fullLesson, setFullLesson] = useState<Lesson | undefined>(undefined);
@@ -81,8 +82,10 @@ export default function AdminPage() {
   }, [tapMode, tapIndex, cues]);
 
   function goBack() {
-    if (tapIndex === 0) return;
-    setTapIndex(i => i - 1);
+    if (tapIndexRef.current === 0) return;
+    const prev = tapIndexRef.current - 1;
+    tapIndexRef.current = prev;
+    setTapIndex(prev);
   }
 
   function shiftAll(delta: number) {
@@ -102,6 +105,7 @@ export default function AdminPage() {
     origCuesRef.current = initial;
     setCues(initial);
     setLoaded(true);
+    tapIndexRef.current = 0;
     setTapIndex(0);
     setOutput("");
     setOffsetMsg("");
@@ -129,14 +133,17 @@ export default function AdminPage() {
   }
 
   function handleTap() {
-    if (tapIndex >= cues.length) return;
+    const idx = tapIndexRef.current;
+    if (idx >= cues.length) return;
     const t = Math.round((playerRef.current?.getCurrentTime?.() || 0) * 10) / 10;
     setCues(prev => prev.map((x, j) => {
-      if (j === tapIndex) return { ...x, start: t };           // 現在の歌詞のstartを設定
-      if (j === tapIndex - 1) return { ...x, end: t };        // 前の歌詞のendを自動調整
+      if (j === idx) return { ...x, start: t };           // 現在の歌詞のstartを設定
+      if (j === idx - 1) return { ...x, end: t };        // 前の歌詞のendを自動調整
       return x;
     }));
-    setTapIndex(i => Math.min(i + 1, cues.length - 1));
+    const next = Math.min(idx + 1, cues.length - 1);
+    tapIndexRef.current = next;
+    setTapIndex(next);
   }
 
   // 表示用: tapIndex-1（今セットした歌詞）を表示。次にセットする歌詞はサブ表示
@@ -219,7 +226,7 @@ export default function AdminPage() {
             <div key={i}
               className={`flex gap-1 items-center rounded px-1 py-0.5 cursor-pointer transition-colors
                 ${i === tapIndex && tapMode ? "bg-orange-900 ring-1 ring-orange-500" : "hover:bg-gray-800"}`}
-              onClick={() => { setTapIndex(i); playerRef.current?.seekTo?.(c.start, true); }}>
+              onClick={() => { tapIndexRef.current = i; setTapIndex(i); playerRef.current?.seekTo?.(c.start, true); }}>
               <span className="text-gray-600 w-5 text-right text-xs">{i+1}</span>
               <input type="number" step="0.5" className="bg-gray-800 border border-gray-700 rounded px-1 w-16 text-center text-xs"
                 value={c.start} onClick={e => e.stopPropagation()}
