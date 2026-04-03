@@ -2,7 +2,8 @@
 
 import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { lessons } from "@/lib/subtitles";
+import { getLessonById } from "@/lib/subtitles";
+import type { Lesson } from "@/lib/subtitles";
 import { lookupWord } from "@/lib/dictionary";
 import { saveWord, isWordSaved, toggleFavorite, isFavorite } from "@/lib/storage";
 import Link from "next/link";
@@ -36,7 +37,10 @@ function renderWithDict(text: string, onWord: (word: string, meaning: string) =>
 
 export default function LessonPage() {
   const { id } = useParams();
-  const lesson = lessons.find((l) => l.id === String(id));
+  const [lesson, setLesson] = useState<Lesson | undefined>(undefined);
+  useEffect(() => {
+    getLessonById(String(id)).then(setLesson);
+  }, [id]);
   const playerRef = useRef<any>(null);
   const [currentIndex, setCurrentIndex] = useState<number>(-1);
   const manualOverrideRef = useRef<number>(0);

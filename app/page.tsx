@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { lessons } from "@/lib/subtitles";
+import { lessonsMeta } from "@/lib/subtitles";
+const lessons = lessonsMeta;
 import { useState, useEffect } from "react";
 import { getFavorites, toggleFavorite } from "@/lib/storage";
 

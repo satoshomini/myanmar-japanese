@@ -1,6 +1,8 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import { lessons } from "@/lib/subtitles";
+import { lessonsMeta, getLessonById } from "@/lib/subtitles";
+import type { Lesson, LessonMeta } from "@/lib/subtitles";
+const lessons = lessonsMeta;
 
 declare global { interface Window { YT: any; onYouTubeIframeAPIReady: () => void; } }
 type Cue = { start: number; end: number; japanese: string; romaji: string; myanmar: string };
@@ -20,7 +22,12 @@ export default function AdminPage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
-  const lesson = lessons.find(l => l.id === selectedId);
+  const lessonMeta = lessons.find(l => l.id === selectedId);
+  const [fullLesson, setFullLesson] = useState<Lesson | undefined>(undefined);
+  useEffect(() => {
+    getLessonById(selectedId).then(setFullLesson);
+  }, [selectedId]);
+  const lesson = fullLesson;
 
   useEffect(() => {
     const initPlayer = () => {
