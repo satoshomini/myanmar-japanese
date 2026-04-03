@@ -1,33 +1,56 @@
-import urllib.request, urllib.parse, json, re, time, sys, html as html_lib
-import xml.etree.ElementTree as ET
+import yt_dlp, urllib.request, urllib.parse, json, re, time, sys, xml.etree.ElementTree as ET, html as html_lib
 
 def fetch_subtitles(vid):
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-        'Accept-Language': 'ja,en;q=0.9',
+    opts = {
+        'writesubtitles': True,
+        'writeautomaticsub': True,
+        'subtitleslangs': ['ja'],
+        'skip_download': True,
+        'quiet': True,
+        'no_warnings': True,
+        'extractor_args': {'youtube': {'skip': ['dash', 'hls']}},
     }
-    req = urllib.request.Request(f"https://www.youtube.com/watch?v={vid}", headers=headers)
-    page = urllib.request.urlopen(req, timeout=15).read().decode('utf-8')
-    m = re.search(r'"captionTracks":(\[.*?\])', page)
-    if not m: return None
-    tracks = json.loads(m.group(1))
-    def pri(t):
-        lc = t.get('languageCode',''); g = t.get('kind','') == 'asr'
-        if lc.startswith('ja') and not g: return 0
-        if lc.startswith('ja'): return 1
-        if not g: return 2
-        return 3
-    tracks.sort(key=pri)
-    track = tracks[0]
-    xml_req = urllib.request.Request(track['baseUrl'], headers=headers)
-    xml_data = urllib.request.urlopen(xml_req, timeout=15).read().decode('utf-8')
-    root = ET.fromstring(xml_data)
+    with yt_dlp.YoutubeDL(opts) as ydl:
+        info = ydl.extract_info(f"https://www.youtube.com/watch?v={vid}", download=False)
+
+    # 字幕URLを取得
+    subs = info.get('subtitles', {})
+    auto = info.get('automatic_captions', {})
+    track_url = None
+    # 手動字幕優先
+    for lang in ['ja', 'ja-Hira']:
+        if lang in subs:
+            for fmt in subs[lang]:
+                if fmt.get('ext') in ('srv3', 'srv1', 'ttml', 'vtt', 'xml'):
+                    track_url = fmt['url']; break
+            if track_url: break
+    if not track_url:
+        for lang in ['ja', 'ja-Hira']:
+            if lang in auto:
+                for fmt in auto[lang]:
+                    if fmt.get('ext') in ('srv3', 'srv1', 'ttml', 'vtt', 'xml'):
+                        track_url = fmt['url']; break
+                if track_url: break
+    if not track_url: return None
+
+    xml_data = urllib.request.urlopen(track_url, timeout=15).read().decode('utf-8')
+    try:
+        root = ET.fromstring(xml_data)
+        cues = []
+        for el in root.iter('text'):
+            s = float(el.get('start', 0)); d = float(el.get('dur', 3))
+            t = html_lib.unescape((el.text or '').replace('\n', ' ')).strip()
+            if t: cues.append({'start': s, 'end': s+d, 'text': t})
+        if cues: return cues
+    except: pass
+    # VTT fallback
     cues = []
-    for el in root.findall('.//text'):
-        s = float(el.get('start',0)); d = float(el.get('dur',3))
-        t = html_lib.unescape((el.text or '').replace('\n',' ')).strip()
-        if t: cues.append({'start':s,'end':s+d,'text':t})
-    return cues
+    for m in re.finditer(r'(\d+:\d+:\d+\.\d+) --> .*\n(.*)', xml_data):
+        parts = m.group(1).split(':')
+        s = int(parts[0])*3600 + int(parts[1])*60 + float(parts[2])
+        t = re.sub(r'<[^>]+>', '', m.group(2)).strip()
+        if t: cues.append({'start': s, 'end': s+3, 'text': t})
+    return cues or None
 
 def fetch_lrc(artist, title):
     q = urllib.parse.quote(f"{artist} {title}")
@@ -50,7 +73,7 @@ def align(auto_cues, lrc_lines):
     cues = []
     for i,(t,text) in enumerate(lrc_lines):
         s = max(0, t+offset); e = max(s+1, (lrc_lines[i+1][0]+offset) if i+1<len(lrc_lines) else s+5)
-        cues.append({'start':round(s),'end':round(e),'japanese':text})
+        cues.append({'start': round(s,1), 'end': round(e,1), 'japanese': text})
     return cues
 
 candidates = [
@@ -108,31 +131,31 @@ skipped = []
 for song_title, artist, title, vid, level in candidates:
     if vid in existing_vids:
         print(f"⏭ {song_title}: 既存スキップ"); continue
-    print(f"[{len(results)+len(skipped)+1}] {song_title} ...", flush=True)
+    print(f"→ {song_title} ...", flush=True)
     try:
         auto_cues = fetch_subtitles(vid)
         if not auto_cues:
-            print(f"  → 字幕なし"); skipped.append(song_title); time.sleep(8); continue
+            print(f"  字幕なし"); skipped.append(song_title); time.sleep(5); continue
         lrc_lines = fetch_lrc(artist, title)
         if not lrc_lines:
-            print(f"  → LRCなし"); skipped.append(song_title); time.sleep(2); continue
+            print(f"  LRCなし"); skipped.append(song_title); time.sleep(2); continue
         cues = align(auto_cues, lrc_lines)
         if not cues:
             skipped.append(song_title); continue
-        results.append({'title':song_title,'vid':vid,'level':level,'cues':cues})
+        results.append({'title': song_title, 'vid': vid, 'level': level, 'cues': cues})
         print(f"  ✅ {len(cues)} lines")
-        time.sleep(10)
+        time.sleep(8)
     except Exception as e:
         err = str(e)[:80]
         print(f"  ❌ {err}")
         skipped.append(song_title)
-        if '429' in err:
-            print("  → 429! 120秒待機..."); time.sleep(120)
+        if '429' in err or 'Too Many' in err:
+            print("  429! 120秒待機..."); time.sleep(120)
         else:
-            time.sleep(10)
+            time.sleep(8)
 
 print(f"\n✅ {len(results)}曲 / ❌ {len(skipped)}曲スキップ")
-with open('/tmp/aligned_songs.json','w') as f:
+with open('/tmp/aligned_songs.json', 'w') as f:
     json.dump(results, f, ensure_ascii=False, indent=2)
 if not results:
     sys.exit(1)
