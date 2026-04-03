@@ -26,7 +26,7 @@ export default function AdminPage() {
   const [fullLesson, setFullLesson] = useState<Lesson | undefined>(undefined);
   useEffect(() => {
     getLessonById(selectedId).then(setFullLesson);
-  }, [fullLesson]);
+  }, [selectedId]);
   const lesson = fullLesson;
 
   useEffect(() => {
