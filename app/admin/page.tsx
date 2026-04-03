@@ -68,6 +68,21 @@ export default function AdminPage() {
     el?.scrollIntoView({ block: "center", behavior: "smooth" });
   }, [tapIndex]);
 
+  useEffect(() => {
+    if (!tapMode) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.code === "Space") { e.preventDefault(); handleTap(); }
+      if (e.code === "ArrowLeft") goBack();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [tapMode, tapIndex, cues]);
+
+  function goBack() {
+    if (tapIndex === 0) return;
+    setTapIndex(i => i - 1);
+  }
+
   function load() {
     if (!lesson) return;
     setCues(lesson.subtitles.map(c => ({ ...c })));
@@ -157,16 +172,18 @@ export default function AdminPage() {
           )}
           <button
             onPointerDown={handleTap}
-            className="w-full py-10 bg-orange-600 hover:bg-orange-500 active:bg-orange-400 active:scale-95 rounded-2xl text-3xl font-bold transition-all"
+            className="w-full py-8 bg-orange-600 hover:bg-orange-500 active:bg-orange-400 active:scale-95 rounded-2xl text-3xl font-bold transition-all"
           >
             TAP
+            <span className="block text-base font-normal opacity-70 mt-1">{currentTime.toFixed(1)}s</span>
           </button>
           <div className="flex gap-2 mt-2">
-            <button onClick={() => setTapIndex(i => Math.max(0, i - 1))}
+            <button onClick={goBack}
               className="flex-1 py-2 bg-gray-700 hover:bg-gray-600 rounded-xl text-sm">← 戻る</button>
             <button onClick={() => setTapIndex(i => Math.min(cues.length - 1, i + 1))}
               className="flex-1 py-2 bg-gray-700 hover:bg-gray-600 rounded-xl text-sm">スキップ →</button>
           </div>
+          <p className="text-center text-gray-500 text-xs mt-1">Space / ← キーでも操作できます</p>
         </div>
       )}
 
